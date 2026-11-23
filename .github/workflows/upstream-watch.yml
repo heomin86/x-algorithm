@@ -1,0 +1,54 @@
+name: Upstream watch (x-algorithm)
+
+on:
+  schedule:
+    - cron: '17 * * * *'   # 매시 17분 (UTC 기준, 한국 시간도 매시 17분)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: upstream-watch
+  cancel-in-progress: false
+
+jobs:
+  sync-and-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/xai-org/x-algorithm.git
+          git fetch upstream main
+
+      - name: Find new upstream commits
+        id: check
+        run: |
+          OLD=$(git merge-base HEAD upstream/main)
+          NEW=$(git rev-parse upstream/main)
+          echo "old=$OLD" >> "$GITHUB_OUTPUT"
+          echo "new=$NEW" >> "$GITHUB_OUTPUT"
+          if [ "$OLD" = "$NEW" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Build diff report
+        if: steps.check.outputs.changed == 'true'
+        run: python3 -I .github/scripts/diff_report.py . ${{ steps.check.outputs.old }} ${{ steps.check.outputs.new }} > report.md
+
+      - name: Post to Notion
+        if: steps.check.outputs.changed == 'true'
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: python3 -I .github/scripts/notify_notion.py . ${{ steps.check.outputs.old }} ${{ steps.check.outputs.new }} report.md
+
+      - name: Sync fork with upstream
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-edit upstream/main
+          git push origin HEAD:main
