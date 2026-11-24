@@ -28,7 +28,7 @@ jobs:
       - name: Notion connection test
         if: inputs.test_notion
         env:
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN || secrets.X_ALGORITHM }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
         run: |
           if [ -z "$NOTION_TOKEN" ]; then echo "::error::NOTION_TOKEN 시크릿이 비어 있어요. Settings > Secrets and variables > Actions > Repository secrets 에 NOTION_TOKEN 이름으로 등록하세요."; exit 1; fi
@@ -69,7 +69,7 @@ jobs:
       - name: Post to Notion
         if: steps.check.outputs.changed == 'true'
         env:
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN || secrets.X_ALGORITHM }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
         run: |
           if [ -z "$NOTION_TOKEN" ]; then echo "::error::NOTION_TOKEN 시크릿이 비어 있어요. Settings > Secrets and variables > Actions > Repository secrets 에 NOTION_TOKEN 이름으로 등록하세요."; exit 1; fi
