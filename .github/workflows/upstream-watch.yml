@@ -2,9 +2,9 @@ name: Upstream watch (x-algorithm)
 
 on:
   schedule:
-    # GitHub은 예약 실행을 자주 건너뛰므로(11/24~25 실측: 36시간에 3번) 15분마다 시도한다.
+    # GitHub은 예약 실행을 자주 건너뛰므로(11/24~25 실측: 36시간에 3번) 30분마다 시도한다.
     # 새 커밋이 없으면 아무것도 안 하므로 중복 기록은 생기지 않는다.
-    - cron: '7,22,37,52 * * * *'
+    - cron: '7,37 * * * *'
   workflow_dispatch:
     inputs:
       test_notion:
